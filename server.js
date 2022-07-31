@@ -6,11 +6,11 @@ const { PORT } = require("./configs/server.config");
 const { DB_URI } = require("./configs/db.config");
 const { userTypes } = require("./utils/constants");
 const app = express();
-const bodyParser = require("body-parser");
+
 //attaching middlewares to request processing pipeline
 //json middleware-to parse request bodies of json format
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //routes middlewares, connect route to server
 require("./routes/authRoute")(app);
