@@ -4,27 +4,30 @@ const bcrypt = require("bcryptjs");
 const User = require("./models/userModel");
 const { PORT } = require("./configs/server.config");
 const { DB_URI } = require("./configs/db.config");
-const { userType } = require("./utils/constants");
+const { userTypes } = require("./utils/constants");
 const app = express();
-
+const bodyParser = require("body-parser");
 //attaching middlewares to request processing pipeline
 //json middleware-to parse request bodies of json format
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+//routes middlewares, connect route to server
+require("./routes/authRoute")(app);
 
 //ADMIN creation at server startup phase(for testing purposes)(usually a admin will be created at database side)
 const initialiseDBRecords = async () => {
   try {
     //check if admin is already present in the db
-    const admin = await User.findOne({ userType: userType.admin });
+    const admin = await User.findOne({ userType: userTypes.admin });
     //if admin user is not present in the db, then create the admin else return
     if (!admin) {
-      const user = await User.create({
+      await User.create({
         name: "John Doe",
-        userId: "johnADMIN",
-        password: bcrypt.hashSync("drpasswo"),
+        userId: "admin",
+        password: bcrypt.hashSync("crmService@1", 10),
         email: "john@email.com",
-        userType: userType.admin,
+        userType: userTypes.admin,
       });
       console.log("Admin user successfully created");
     } else {
@@ -43,7 +46,7 @@ const connectDB = async () => {
     console.error("Error while connecting to DB-> ", DB_URI);
   });
   db.once("open", () => {
-    console.log("Successfully connection to DB estabished.");
+    console.log("Successfull connection to DB estabished.");
     initialiseDBRecords();
   });
 };
