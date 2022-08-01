@@ -43,7 +43,7 @@ exports.signup = async (req, res) => {
 //controller function to handle signin
 exports.signin = async (req, res) => {
   const { userId, password } = req.body;
-  
+
   try {
     //check whether user with given userId exists or not
     const user = await User.findOne({ userId });
@@ -67,7 +67,7 @@ exports.signin = async (req, res) => {
         .status(401)
         .json({ success: false, message: " Password doesn't matched." });
     }
-    //since user is validated,so create access token (using jsonwebtoken library) and send it along with other response body
+    //since user is validated,so create access token (using jsonwebtoken library) and send it along with other values in response body
     const token = jwt.sign({ id: user.userId }, authConfig.secret, {
       expiresIn: authConfig.expiryPeriod,
     });

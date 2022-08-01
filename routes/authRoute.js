@@ -1,4 +1,4 @@
-//this file contains the logic for handling the signup and signin requests
+//this file contains the logic for addressing the signup and signin requests
 const authController = require("../controllers/authController");
 const {
   validateSignUpRequestBody,
