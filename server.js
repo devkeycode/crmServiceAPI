@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 //routes middlewares, connect route to server
 require("./routes/authRoute")(app);
 require("./routes/userRoute")(app);
+require("./routes/ticketRoute")(app);
 
 //ADMIN creation at server startup phase(for testing purposes)(usually a admin will be created at database side)
 const initialiseDBRecords = async () => {

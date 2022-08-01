@@ -16,7 +16,7 @@ module.exports = {
     closed: "CLOSED",
     blocked: "BLOCKED",
   },
-  ticketPriority: {
+  ticketPriorities: {
     low: 4,
     medium: 3,
     high: 2,

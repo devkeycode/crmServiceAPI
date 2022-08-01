@@ -1,6 +1,7 @@
 const {
   validateSignUpRequestBody,
   validateSignInRequestBody,
+  validateTicketRequestBody,
 } = require("./validation");
 const {
   verifyToken,
@@ -16,4 +17,5 @@ module.exports = {
   isAdmin,
   isAdminOrOwner,
   isValidUserIdInReqParam,
+  validateTicketRequestBody,
 };

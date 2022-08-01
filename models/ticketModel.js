@@ -1,7 +1,7 @@
 //Ticket schema ->Ticket{title,description,reporter,assignee,createdAt,updatedAt,ticketPriority,ticketStatus}
 
 const mongoose = require("mongoose");
-const { ticketPriority, ticketStauses } = require("../utils/constants");
+const { ticketPriorities, ticketStauses } = require("../utils/constants");
 
 const ticketSchema = new mongoose.Schema(
   {
@@ -12,12 +12,12 @@ const ticketSchema = new mongoose.Schema(
     ticketPriority: {
       type: Number,
       required: true,
-      default: ticketPriority.low,
+      default: ticketPriorities.low,
       enum: [
-        ticketPriority.low,
-        ticketPriority.medium,
-        ticketPriority.high,
-        ticketPriority.extreme,
+        ticketPriorities.low,
+        ticketPriorities.medium,
+        ticketPriorities.high,
+        ticketPriorities.extreme,
       ],
     },
     description: {
