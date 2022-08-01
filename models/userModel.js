@@ -1,4 +1,4 @@
-//User schema-> User{name,userId,email,password,userType,userStatus,createdAt}
+//User schema-> User{name,userId,email,password,userType,userStatus,createdAt,}
 
 const mongoose = require("mongoose");
 const { userTypes, userStatuses } = require("../utils/constants");
@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
         userStatuses.rejected,
         userStatuses.pending,
       ],
+    },
+    ticketsCreated: {
+      type: [mongoose.SchemaTypes.ObjectId],
+      ref: "Ticket",
+    },
+    ticketsAssigned: {
+      type: [mongoose.SchemaTypes.ObjectId],
+      ref: "Ticket",
     },
   },
   { versionKey: false }
