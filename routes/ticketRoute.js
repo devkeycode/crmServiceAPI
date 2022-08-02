@@ -4,6 +4,7 @@ const ticketController = require("../controllers/ticketController");
 const {
   verifyToken,
   validateTicketRequestBody,
+  validateTicketUpdateRequestBody,
   isValidTicketIdInReqParam,
   isHavingValidTicketRights,
 } = require("../middlewares");
@@ -26,5 +27,17 @@ module.exports = (app) => {
     "/crmService/api/v1/tickets/:id",
     [verifyToken, isValidTicketIdInReqParam, isHavingValidTicketRights],
     ticketController.findByTicketId
+  );
+
+  //update ticket based on ticketId
+  app.put(
+    "/crmService/api/v1/tickets/:id",
+    [
+      verifyToken,
+      isValidTicketIdInReqParam,
+      validateTicketUpdateRequestBody,
+      isHavingValidTicketRights,
+    ],
+    ticketController.updateTicket
   );
 };

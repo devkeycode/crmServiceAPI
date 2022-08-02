@@ -2,6 +2,7 @@ const {
   validateSignUpRequestBody,
   validateSignInRequestBody,
   validateTicketRequestBody,
+  validateTicketUpdateRequestBody,
 } = require("./validation");
 const {
   verifyToken,
@@ -22,4 +23,5 @@ module.exports = {
   isValidTicketIdInReqParam,
   validateTicketRequestBody,
   isHavingValidTicketRights,
+  validateTicketUpdateRequestBody,
 };

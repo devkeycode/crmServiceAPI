@@ -2,7 +2,11 @@
 
 const Ticket = require("../models/ticketModel");
 const User = require("../models/userModel");
-const { userTypes, userStatuses } = require("../utils/constants");
+const {
+  userTypes,
+  userStatuses,
+  ticketStauses,
+} = require("../utils/constants");
 
 //create Ticket
 exports.create = async (req, res) => {
@@ -146,6 +150,135 @@ exports.findByTicketId = async (req, res) => {
   } catch (error) {
     console.error("Error while searching ticket", error.message);
     res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// update ticket based on ticket Id
+exports.updateTicket = async (req, res) => {
+  try {
+    //get the ticket
+    const ticket = await Ticket.findById(req.params.id);
+
+    //update the ticket
+    ticket.title = req.body.title != undefined ? req.body.title : ticket.title;
+    ticket.description =
+      req.body.description != undefined
+        ? req.body.description
+        : ticket.description;
+    ticket.ticketPriority =
+      req.body.ticketPriority != undefined
+        ? req.body.ticketPriority
+        : ticket.ticketPriority;
+
+    //check for assignee and status(here is restriction that admin cant change assignee and ticket status update in a single request-System restriction check already put in middleware)
+    /**
+     * Scenarios (Assignee Change) Engineer(affectedFields
+     * 0.Special scenario->in case,no engineer assigned previously(this case happen when no approved engineer present in the system,during ticket creation,so assigned null as assignee),, so in these case, dont check for ticket(previousState) and also no need to update OldEngineer(as no one was there)
+     * 1. if Ticket is Open -> OldEngineer(ticketAssigned,workingTicketcount decremented )....NewEngineer(ticketAssigned,workingTicketcount Incremented)
+     * 2. Ticket Blocked-> OldEngineer(ticketAssigned)....NewEngineer(ticketAssigned)
+     * 3. Ticket Closed -> OldEngineer(ticketAssigned)....NewEngineer(ticketAssigned)
+     */
+
+    /**
+     * Scenarios ( new Status Change), depending on previous state(status) Engineer(affectedFields) will be affected
+     * 0.Special scenario->in case,no engineer assigned previously(this case happen when no approved engineer present in the system,during ticket creation,so assigned null as assignee),, so in these case, dont check for ticket(previousState) and also no need to update OldEngineer(as no one was there)
+     * 1. Ticket Open Request (previous status must be blocked or closed)-> Engineer(workingTicketCount increment)
+     * 2. Ticket Blocked Request (previous status must be open)-> Engineer(workingTicketCount decrement)
+     * 3. Ticket Closed Request (previous status must be open)-> Engineer(workingTicketCount decrement)
+     *
+     */
+
+    //Assignee update
+    let previousEngineerAssigneeId;
+    let previousStatusState;
+    if (req.body.assignee !== undefined) {
+      previousEngineerAssigneeId = ticket.assignee;
+      previousStatusState = ticket.status;
+      //assign the new engineer
+      ticket.assignee = req.body.assignee;
+    } else {
+      ticket.assignee = ticket.assignee;
+    }
+    //Status update
+    if (req.body.status !== undefined) {
+      previousStatusState = ticket.status;
+      previousEngineerAssigneeId = ticket.assignee;
+      //assign the new Status
+      ticket.status = req.body.status;
+    } else {
+      ticket.assignee = ticket.assignee;
+    }
+
+    //update the ticket over the db
+    const udpatedTicket = await ticket.save();
+
+    //now update the engineer details
+    if (
+      req.body.assignee !== undefined &&
+      previousEngineerAssigneeId !== null
+    ) {
+      //means assignee has been updated
+      //so update the engineers details now
+      const previousEngineer = await User.findOne({
+        userId: previousEngineerAssigneeId,
+      });
+      const newEngineer = await User.findOne({
+        userId: udpatedTicket.assignee,
+      });
+
+      //special case,only if ticket was open
+      if (previousStatusState === ticketStauses.open) {
+        previousEngineer.ticketsWorkingOnCount -= 1;
+        newEngineer.ticketsWorkingOnCount += 1;
+      }
+      //common update in all 3 cases
+
+      previousEngineer.ticketsAssigned =
+        previousEngineer.ticketsAssigned.filter(
+          (ticketId) => ticketId != req.params.id
+        );
+
+      newEngineer.ticketsAssigned.push(udpatedTicket._id);
+
+      //update in db
+      await newEngineer.save();
+      await previousEngineer.save();
+    }
+
+    if (req.body.status !== undefined && previousEngineerAssigneeId !== null) {
+      const engineer = await User.findOne({ userId: udpatedTicket.assignee });
+      switch (req.body.status) {
+        case ticketStauses.open:
+          if (
+            previousStatusState === ticketStauses.blocked ||
+            previousStatusState === ticketStauses.closed
+          ) {
+            engineer.ticketsWorkingOnCount += 1;
+          }
+          break;
+        case ticketStauses.blocked:
+          if (previousStatusState === ticketStauses.open) {
+            engineer.ticketsWorkingOnCount -= 1;
+          }
+          break;
+        case ticketStauses.closed:
+          if (previousStatusState === ticketStauses.open) {
+            engineer.ticketsWorkingOnCount -= 1;
+          }
+          break;
+      }
+      await engineer.save(); //save in the db
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Ticket successfully updated.",
+    });
+  } catch (error) {
+    console.error("Error while updating ticket", error.message);
+    return res.status(500).json({
       success: false,
       message: "Internal server error",
     });
