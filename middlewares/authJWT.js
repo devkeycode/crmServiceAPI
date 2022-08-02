@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const authConfig = require("../configs/auth.config");
 const { userTypes, userStatuses } = require("../utils/constants");
 const User = require("../models/userModel");
+const Ticket = require("../models/ticketModel");
 const { isValidObjectId } = require("mongoose");
 
 const verifyToken = (req, res, next) => {
@@ -96,6 +97,12 @@ const isAdminOrOwner = async (req, res, next) => {
 
 //to check whether the ValidUserId passed as request parameter
 const isValidUserIdInReqParam = async (req, res, next) => {
+  if (!req.params.id) {
+    return res.status(400).json({
+      success: false,
+      message: "No UserId passed as parameter.",
+    });
+  }
   try {
     const user = await User.findOne({ userId: req.params.id });
     if (!user) {
@@ -107,9 +114,46 @@ const isValidUserIdInReqParam = async (req, res, next) => {
     //userId exists,pass the control to next
     next();
   } catch (error) {
-    console.log("Error while reading the user info", error.message);
+    console.log("Error while accessing the data", error.message);
     return res.status(500).send({
-      message: "Internal server error while reading the user data",
+      message: "Internal server error while reading the data",
+    });
+  }
+};
+
+//to check whether valid TicketId passed as req.paramater
+const isValidTicketIdInReqParam = async (req, res, next) => {
+  //check whether ticketId is of valid ObjectId type or not
+  if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Not a valid ticketId.",
+    });
+  }
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (ticket == null) {
+      return res.status(400).json({
+        success: false,
+        message: "Not a valid ticketId.",
+      });
+    }
+    const user = await User.findOne({ userId: req.userId });
+
+    //as ticket id is valid , now ensure do the requestedUser(req.userId) have rights to access the ticketId or not
+    if (!isAccessAllowed(user, req.params.id)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Ticket access not allowed.Ticket access only allowed to the concerned authorised user.",
+      });
+    }
+    //access allowed,pass the control to next
+    next();
+  } catch (error) {
+    console.log("Error while accessing the  info", error.message);
+    return res.status(500).send({
+      message: "Internal server error while accessing the  data.",
     });
   }
 };
@@ -119,4 +163,29 @@ module.exports = {
   isAdmin,
   isAdminOrOwner,
   isValidUserIdInReqParam,
+  isValidTicketIdInReqParam,
 };
+
+/**
+ *
+ * @param {Object} user
+ * @param {ObjectId} ticketId
+ * @returns {Boolean} true or false
+ * @Description To check whether the repective user have rights to access the ticket having given ticketId
+ */
+function isAccessAllowed(user, ticketId) {
+  switch (user.userType) {
+    case userTypes.customer:
+      return user.ticketsCreated.includes(ticketId);
+      break;
+    case userTypes.engineer:
+      return (
+        user.ticketsCreated.includes(ticketId) ||
+        user.ticketsAssigned.includes(ticketId)
+      );
+      break;
+    default: //as admin is allowed to access any ticket
+      return true;
+      break;
+  }
+}

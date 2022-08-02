@@ -8,6 +8,7 @@ const {
   isAdmin,
   isAdminOrOwner,
   isValidUserIdInReqParam,
+  isValidTicketIdInReqParam,
 } = require("./authJWT");
 
 module.exports = {
@@ -17,5 +18,6 @@ module.exports = {
   isAdmin,
   isAdminOrOwner,
   isValidUserIdInReqParam,
+  isValidTicketIdInReqParam,
   validateTicketRequestBody,
 };

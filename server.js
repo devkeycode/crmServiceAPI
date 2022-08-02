@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//routes middlewares, connect route to server
+//routes middlewares, connect route to server by passing app object,so routes attached to the server
 require("./routes/authRoute")(app);
 require("./routes/userRoute")(app);
 require("./routes/ticketRoute")(app);
