@@ -138,17 +138,29 @@ const isValidTicketIdInReqParam = async (req, res, next) => {
         message: "Not a valid ticketId.",
       });
     }
-    const user = await User.findOne({ userId: req.userId });
+    //valid ticketId,pass the control to next
+    next();
+  } catch (error) {
+    console.log("Error while accessing the  info", error.message);
+    return res.status(500).send({
+      message: "Internal server error while accessing the  data.",
+    });
+  }
+};
 
-    //as ticket id is valid , now ensure do the requestedUser(req.userId) have rights to access the ticketId or not
-    if (!isAccessAllowed(user, req.params.id)) {
+const isHavingValidTicketRights = async (req, res, next) => {
+  //since we have user through userId and ticketId, so can access ticket through ticketId
+  try {
+    const user = await User.findOne({ userId: req.userId });
+    const ticket = await Ticket.findById(req.params.id);
+    if (!isAccessAllowed(user, ticket)) {
       return res.status(403).json({
         success: false,
         message:
           "Ticket access not allowed.Ticket access only allowed to the concerned authorised user.",
       });
     }
-    //access allowed,pass the control to next
+    //if access allowed, pass the control to next
     next();
   } catch (error) {
     console.log("Error while accessing the  info", error.message);
@@ -164,25 +176,23 @@ module.exports = {
   isAdminOrOwner,
   isValidUserIdInReqParam,
   isValidTicketIdInReqParam,
+  isHavingValidTicketRights,
 };
 
 /**
  *
  * @param {Object} user
- * @param {ObjectId} ticketId
+ * @param {Object} ticket
  * @returns {Boolean} true or false
  * @Description To check whether the repective user have rights to access the ticket having given ticketId
  */
-function isAccessAllowed(user, ticketId) {
+function isAccessAllowed(user, ticket) {
   switch (user.userType) {
     case userTypes.customer:
-      return user.ticketsCreated.includes(ticketId);
+      return ticket.reporter == user.userId;
       break;
     case userTypes.engineer:
-      return (
-        user.ticketsCreated.includes(ticketId) ||
-        user.ticketsAssigned.includes(ticketId)
-      );
+      return ticket.reporter == user.userId || ticket.assignee == user.userId;
       break;
     default: //as admin is allowed to access any ticket
       return true;

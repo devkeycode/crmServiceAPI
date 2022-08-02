@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
       //no engineer is there in the sytem at present,so assign null as ticket assignee, so later admin can approve some engineers and assign one of them
       ticketObj.assignee = null;
     } else {
-      //pick up the engineer with lowest ticketsworkingOnCount by sorting the enginenerList in non-decreasing order
+      //pick up the engineer with lowest ticketsworkingOnCount by sorting the engineerList in non-decreasing order
       engineersList.sort(
         (a, b) => a.ticketsWorkingOnCount - b.ticketsWorkingOnCount
       );
@@ -93,6 +93,7 @@ exports.findAllTickets = async (req, res) => {
           message: "No tickets created by the user yet.",
         });
       }
+      //otherwise add ticketsCreated query for the customer userType
       queryObject["_id"] = { $in: ticketsCreated };
       break;
     case userTypes.engineer:

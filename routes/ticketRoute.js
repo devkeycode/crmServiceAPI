@@ -5,6 +5,7 @@ const {
   verifyToken,
   validateTicketRequestBody,
   isValidTicketIdInReqParam,
+  isHavingValidTicketRights,
 } = require("../middlewares");
 
 module.exports = (app) => {
@@ -23,7 +24,7 @@ module.exports = (app) => {
   //fetch ticket based on ticketId
   app.get(
     "/crmService/api/v1/tickets/:id",
-    [verifyToken, isValidTicketIdInReqParam],
+    [verifyToken, isValidTicketIdInReqParam, isHavingValidTicketRights],
     ticketController.findByTicketId
   );
 };
