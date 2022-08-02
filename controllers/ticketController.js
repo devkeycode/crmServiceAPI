@@ -18,6 +18,7 @@ exports.create = async (req, res) => {
   //to assign an engineer at first, will have to fetch the engineer having least number of tickets  assigned
   try {
     //get the list of engineers in the system
+    //default sort method of mongoose can also be used for sorting engineer based on ticketsWorkingOnCount
     const engineersList = await User.find({
       userType: userTypes.engineer,
       userStatus: userStatuses.approved,
@@ -27,18 +28,11 @@ exports.create = async (req, res) => {
       //no engineer is there in the sytem at present,so assign null as ticket assignee, so later admin can approve some engineers and assign one of them
       ticketObj.assignee = null;
     } else {
-      //pick up the engineer with lowest assigned ticket count
-      let minimumTicketsAssignedCount = Number.MAX_SAFE_INTEGER;
-      let potentialAssignee;
-      for (let engineer of engineersList) {
-        let engineerAssignedTicketCount = engineer.ticketsAssigned.length;
-        if (engineerAssignedTicketCount < minimumTicketsAssignedCount) {
-          //update
-          potentialAssignee = engineer;
-          minimumTicketsAssignedCount = engineerAssignedTicketCount;
-        }
-      }
-
+      //pick up the engineer with lowest ticketsworkingOnCount by sorting the enginenerList in non-decreasing order
+      engineersList.sort(
+        (a, b) => a.ticketsWorkingOnCount - b.ticketsWorkingOnCount
+      );
+      let potentialAssignee = engineersList[0]; //pick up the very first engineer after sorting
       //assign the ticket to engineer(potentialAssignee) thru userId
       ticketObj.assignee = potentialAssignee.userId;
     }
@@ -55,11 +49,12 @@ exports.create = async (req, res) => {
       await user.save();
 
       if (ticketCreated.assignee !== null) {
-        //means an engineer is assinged the ticket,so update the ticketsAssigned field for that engineer
+        //means an engineer is assinged the ticket,so update the ticketsAssigned field for that engineer and also increase the ticketsWorkingOnCount
         const engineer = await User.findOne({
           userId: ticketCreated.assignee,
         });
         engineer.ticketsAssigned.push(ticketCreated._id);
+        engineer.ticketsWorkingOnCount += 1;
         await engineer.save();
       }
 
@@ -76,3 +71,8 @@ exports.create = async (req, res) => {
     });
   }
 };
+
+//fetch all tickets
+//admin userType->can get all the tickets
+//customer userType-> can get all the ticketsCreated by the given user
+//Engineer userType -> can get all the ticketsCreated by the user and ticketsAssigned to the user

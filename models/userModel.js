@@ -65,6 +65,10 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.SchemaTypes.ObjectId],
       ref: "Ticket",
     },
+    ticketsWorkingOnCount: {
+      type: Number,
+      default: 0,
+    }, //make count of tickets working on,when ticket assigned to an engineer increase count by 1,and whenever tickets get closed or blocked(other than Open status) or ticket reassigned to other engineer, decrease the count from the respective engineer and increase the other(in case of updation),any new ticket may be assigned to an engineer with less ticketsWorkingOn initially
   },
   { versionKey: false }
 );
