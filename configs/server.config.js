@@ -4,4 +4,5 @@ if (process.NODE_ENV !== "production") {
 
 module.exports = {
   PORT: process.env.PORT,
+  Notification_Service_URI: process.env.NOTIFICATION_SERVICE_URI,
 };

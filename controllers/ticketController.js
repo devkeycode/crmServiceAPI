@@ -7,6 +7,7 @@ const {
   userStatuses,
   ticketStauses,
 } = require("../utils/constants");
+const { sendNotificationReq } = require("../utils/notificationClient");
 
 //create Ticket
 exports.create = async (req, res) => {
@@ -61,6 +62,24 @@ exports.create = async (req, res) => {
         engineer.ticketsWorkingOnCount += 1;
         await engineer.save();
       }
+
+      //Prepare and get the Mailcontent
+      const mailContent = getMailContent(ticketCreated);
+
+      //prepare and get the recipientEmailList
+      const recipientEmailList = await getRecipientEmailList(ticketCreated);
+
+      if (recipientEmailList instanceof Error) {
+        throw recipientEmailList;
+        //so it will be catch by the catch block and internal server error as respone will be send
+      }
+      //calling sendNotificationReq function
+      sendNotificationReq(
+        `Ticket created succesfully with Ticket id: ${ticketCreated._id}`,
+        recipientEmailList,
+        mailContent,
+        "CRM Service Api"
+      );
 
       return res.status(201).json({
         success: true,
@@ -213,7 +232,7 @@ exports.updateTicket = async (req, res) => {
     }
 
     //update the ticket over the db
-    const udpatedTicket = await ticket.save();
+    const updatedTicket = await ticket.save();
 
     //now update the engineer details
     if (
@@ -226,7 +245,7 @@ exports.updateTicket = async (req, res) => {
         userId: previousEngineerAssigneeId,
       });
       const newEngineer = await User.findOne({
-        userId: udpatedTicket.assignee,
+        userId: updatedTicket.assignee,
       });
 
       //special case,only if ticket was open
@@ -241,7 +260,7 @@ exports.updateTicket = async (req, res) => {
           (ticketId) => ticketId != req.params.id
         );
 
-      newEngineer.ticketsAssigned.push(udpatedTicket._id);
+      newEngineer.ticketsAssigned.push(updatedTicket._id);
 
       //update in db
       await newEngineer.save();
@@ -249,7 +268,7 @@ exports.updateTicket = async (req, res) => {
     }
 
     if (req.body.status !== undefined && previousEngineerAssigneeId !== null) {
-      const engineer = await User.findOne({ userId: udpatedTicket.assignee });
+      const engineer = await User.findOne({ userId: updatedTicket.assignee });
       switch (req.body.status) {
         case ticketStauses.open:
           if (
@@ -272,6 +291,27 @@ exports.updateTicket = async (req, res) => {
       }
       await engineer.save(); //save in the db
     }
+
+    //TODO:before sending the response back to the crmService API client, after ticket successfully updated, send email(RESTAPI Calls to notificationService) to the concerned stake holders first, using sendEmail method(imported from notifcationClient utils package(internally using node-rest-client))
+
+    //Prepare and get the Mailcontent
+    const mailContent = getMailContent(updatedTicket);
+
+    //prepare and get the recipientEmailList
+    const recipientEmailList = await getRecipientEmailList(updatedTicket);
+
+    if (recipientEmailList instanceof Error) {
+      throw recipientEmailList;
+      //so it will be catch by the catch block and internal server error as respone will be send
+    }
+    //calling sendNotificationReq function
+    sendNotificationReq(
+      `Ticket updated succesfully having Ticket id: ${updatedTicket._id}`,
+      recipientEmailList,
+      mailContent,
+      "CRM Service Api"
+    );
+
     return res.status(200).json({
       success: true,
       message: "Ticket successfully updated.",
@@ -316,4 +356,52 @@ function addOptionalQueries(req, queryObject) {
     let regexp = new RegExp(`${req.query.description}`, "i");
     queryObject.description = { $regex: regexp };
   }
+}
+
+/**
+ *
+ * @param {Object} ticket
+ * @returns {Array} recipientEmailList
+ * @Description function to prepare valid stakeholders list (RecipientEmailList) from the ticket and return it
+ */
+async function getRecipientEmailList(ticket) {
+  //prepare the recipientEmail list
+  try {
+    //get the reporter
+    const reporter = await User.findOne({
+      userId: ticket.reporter,
+    });
+    //get the admin
+    const admin = await User.findOne({ userType: userTypes.admin });
+
+    const recipientEmailList = [reporter.email, admin.email];
+
+    //add assignee only if its not null
+    if (ticket.assignee != null) {
+      //then only,get the assignee and add it to recipientEmailList
+      const assignee = await User.findOne({
+        userId: ticket.assignee,
+      });
+      recipientEmailList.push(assignee.email);
+    }
+    return recipientEmailList;
+  } catch (error) {
+    return error;
+  }
+}
+
+/**
+ *
+ * @param {Object} ticket
+ * @returns {String} MailContent
+ * @Description function to prepare mailContent from the ticket and return it
+ */
+function getMailContent(ticket) {
+  const mailContent = `Ticket Details->  
+    Title :${ticket.title},
+    Description :${ticket.description},
+    Status :${ticket.status},
+    Reporter :${ticket.reporter},
+    Assignee :${ticket.assignee},`;
+  return mailContent;
 }
