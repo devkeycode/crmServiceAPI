@@ -30,19 +30,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minLength: 10,
     },
-    createdAt: {
-      type: Date,
-      default: () => {
-        return Date.now();
-      },
-      immutable: true,
-    },
-    updatedAt: {
-      type: Date,
-      default: () => {
-        return Date.now();
-      },
-    },
     userType: {
       type: String,
       default: userTypes.customer,
@@ -70,6 +57,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     }, //make count of tickets working on,when ticket assigned to an engineer increase count by 1,and whenever tickets get closed or blocked(other than Open status) or ticket reassigned to other engineer, decrease the count from the respective engineer and increase the other(in case of updation),any new ticket may be assigned to an engineer with less ticketsWorkingOn initially
   },
+  { timestamps: true },
   { versionKey: false }
 );
 

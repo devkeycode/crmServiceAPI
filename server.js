@@ -24,14 +24,14 @@ const initialiseDBRecords = async () => {
     const admin = await User.findOne({ userType: userTypes.admin });
     //if admin user is not present in the db, then create the admin else return
     if (!admin) {
-      await User.create({
+      const user = await User.create({
         name: "John Doe",
         userId: "admin",
         password: bcrypt.hashSync("crmService@1", 10),
         email: "john@email.com",
         userType: userTypes.admin,
       });
-      console.log("Admin user successfully created");
+      console.log("Admin user successfully created", user);
     } else {
       return;
     }
@@ -40,7 +40,7 @@ const initialiseDBRecords = async () => {
   }
 };
 
-//Connect to db and admin creation(admin creation only for development testing purpose)
+//Connect to db and admin creation(admin creation here creating from server, only for development testing purpose)
 const connectDB = async () => {
   mongoose.connect(DB_URI);
   const db = mongoose.connection;

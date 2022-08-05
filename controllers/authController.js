@@ -1,7 +1,7 @@
 //this file contains the logic for handling the user registration(signUp) and user signIn
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { userStatuses } = require("../utils/constants");
+const { userStatuses, userTypes } = require("../utils/constants");
 const { filterUserResponse } = require("../utils/objectConverter");
 const User = require("../models/userModel");
 const authConfig = require("../configs/auth.config");
@@ -13,8 +13,8 @@ exports.signup = async (req, res) => {
 
   let userStatus;
 
-  if (userType) {
-    //userType is provided, ensure to make userStatus as pending
+  if (userType && userType === userTypes.engineer) {
+    //userType is provided and userType is ENGINEER, ensure to make userStatus as pending
     userStatus = userStatuses.pending;
   }
   try {

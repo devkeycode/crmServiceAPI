@@ -218,18 +218,14 @@ exports.updateTicket = async (req, res) => {
       previousStatusState = ticket.status;
       //assign the new engineer
       ticket.assignee = req.body.assignee;
-    } else {
-      ticket.assignee = ticket.assignee;
-    }
+    } 
     //Status update
     if (req.body.status !== undefined) {
       previousStatusState = ticket.status;
       previousEngineerAssigneeId = ticket.assignee;
       //assign the new Status
       ticket.status = req.body.status;
-    } else {
-      ticket.assignee = ticket.assignee;
-    }
+    } 
 
     //update the ticket over the db
     const updatedTicket = await ticket.save();

@@ -37,20 +37,8 @@ const ticketSchema = new mongoose.Schema(
     assignee: {
       type: String,
     },
-    createdAt: {
-      type: Date,
-      default: () => {
-        return Date.now();
-      },
-      immutable: true,
-    },
-    updatedAt: {
-      type: Date,
-      default: () => {
-        return Date.now();
-      },
-    },
   },
+  { timestamps: true },
   { versionKey: false }
 );
 
