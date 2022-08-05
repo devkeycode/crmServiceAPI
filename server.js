@@ -17,6 +17,16 @@ require("./routes/authRoute")(app);
 require("./routes/userRoute")(app);
 require("./routes/ticketRoute")(app);
 
+
+//in case of endpoint ,not exists, send the 404 response
+app.use((req,res)=>{
+  res.status(404).json({
+    success:"false",
+    message:"The requested endpoint doesn't exists."
+  })
+})
+
+
 //ADMIN creation at server startup phase(for testing purposes)(usually a admin will be created at database side)
 const initialiseDBRecords = async () => {
   try {

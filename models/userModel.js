@@ -57,8 +57,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     }, //make count of tickets working on,when ticket assigned to an engineer increase count by 1,and whenever tickets get closed or blocked(other than Open status) or ticket reassigned to other engineer, decrease the count from the respective engineer and increase the other(in case of updation),any new ticket may be assigned to an engineer with less ticketsWorkingOn initially
   },
-  { timestamps: true },
-  { versionKey: false }
+  { timestamps: true, versionKey: false }
 );
 
 module.exports = mongoose.model("User", userSchema);
